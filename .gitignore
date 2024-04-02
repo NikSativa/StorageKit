@@ -1,0 +1,64 @@
+# OS X
+.DS_Store
+
+# Xcode
+xcuserdata/
+
+# Builds & DerivedData various possible locations
+build/
+DerivedData**/
+.DerivedData/
+Build/DerivedData/
+Builds/
+.swiftpm/
+.swiftformat
+
+## Various settings
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+**/xcuserdata/**
+
+## Other
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+## Obj-C/Swift specific
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+# CocoaPods team recommends against adding the Pods directory to .gitignore.
+# Pros and cons are mentioned at: https://guides.cocoapods.org/using/using-cocoapods.html#should-i-ignore-the-pods-directory-in-source-control
+*/Pods/*
+*/Legacy/Pods/*
+
+# Bundler
+.bundle/
+bin/
+.bin/
+
+# fastlane
+fastlane/report.xml
+fastlane/test_output
+report.json
+**.p8
+**.asc
+
+# Brew
+Brewfile.lock.json
+
+# SwiftFormat
+**/BuildTools/.build
+**/BuildTools/.swiftpm
+Project/JetCheck.xcodeproj/xcshareddata/xcschemes/JetCheck-Local.xcscheme
+
+fastlane/cache/
