@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "NStorage",
+    name: "StorageKit",
     platforms: [
         .iOS(.v13),
         .macOS(.v11),
@@ -13,21 +13,21 @@ let package = Package(
         .watchOS(.v6)
     ],
     products: [
-        .library(name: "NStorage", targets: ["NStorage"])
+        .library(name: "StorageKit", targets: ["StorageKit"])
     ],
     dependencies: [
     ],
     targets: [
-        .target(name: "NStorage",
+        .target(name: "StorageKit",
                 dependencies: [
                 ],
                 path: "Source",
                 resources: [
                     .copy("../PrivacyInfo.xcprivacy")
                 ]),
-        .testTarget(name: "NStorageTests",
+        .testTarget(name: "StorageKitTests",
                     dependencies: [
-                        "NStorage"
+                        "StorageKit"
                     ],
                     path: "Tests")
     ]

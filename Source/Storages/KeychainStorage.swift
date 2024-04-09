@@ -37,7 +37,7 @@ public struct KeychainConfiguration: Equatable {
     }
 }
 
-public final class KeychainStorage<Value>: Storage
+public final class KeychaiStorageKit<Value>: Storage
 where Value: Equatable & Codable & ExpressibleByNilLiteral {
     private lazy var subject: ValueSubject<Value> = .init(get())
     public private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
