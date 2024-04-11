@@ -23,11 +23,3 @@ public extension InMemoryStorage where Value: ExpressibleByNilLiteral {
         self.init(value: nil)
     }
 }
-
-// MARK: - ExpressibleByNilLiteral
-
-extension InMemoryStorage: ExpressibleByNilLiteral where Value: ExpressibleByNilLiteral {
-    public convenience init(nilLiteral: ()) {
-        self.init(value: nil)
-    }
-}

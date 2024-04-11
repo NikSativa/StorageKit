@@ -21,11 +21,11 @@ where Value: ExpressibleByNilLiteral & Codable {
         }
     }
 
-    public init(fileName: String,
-                fileManager: FileManager = .default) {
-        self.fileName = fileName
-        self.fileManager = fileManager
-
+    /// save the value in file
+    ///
+    /// ./*userDomainMask*/*cachesDirectory*/**Storages**/*fileName*.stg
+    public convenience init(fileName: String,
+                            fileManager: FileManager = .default) {
         var folderUrl = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
             .first.unsafelyUnwrapped
             .appendingPathComponent("Storages", isDirectory: true)
@@ -40,7 +40,18 @@ where Value: ExpressibleByNilLiteral & Codable {
             }
         }
 
-        self.filePath = folderUrl.appendingPathComponent(fileName).appendingPathExtension("stg")
+        let filePath = folderUrl.appendingPathComponent(fileName).appendingPathExtension("stg")
+        self.init(fileName: fileName,
+                  fileManager: fileManager,
+                  filePath: filePath)
+    }
+
+    public required init(fileName: String,
+                         fileManager: FileManager = .default,
+                         filePath: URL) {
+        self.fileName = fileName
+        self.filePath = filePath
+        self.fileManager = fileManager
     }
 
     private func get() -> Value {
