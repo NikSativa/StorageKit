@@ -1,4 +1,6 @@
 # StorageKit
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FNikSativa%2FStorageKit%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/NikSativa/StorageKit)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FNikSativa%2FStorageKit%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/NikSativa/StorageKit)
 
 Swift library for saving and retrieving data from any kind storage.
 
