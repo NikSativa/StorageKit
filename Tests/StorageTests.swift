@@ -36,7 +36,7 @@ final class StorageTests: XCTestCase {
 
 //        Testing the Keychain - OSStatus error -34018
 //        https://stackoverflow.com/questions/22082996/testing-the-keychain-osstatus-error-34018
-//        storageTesting(KeychaiStorageKit(key: "MyKey", configuration: .init(service: Bundle.main.bundleIdentifier ?? "MyService")))
+//        storageTesting(KeychainStorage(key: "MyKey", configuration: .init(service: Bundle.main.bundleIdentifier ?? "MyService")))
     }
 
     private func storageTesting<S: Storage>(_ subject: S, file: StaticString = #filePath, line: UInt = #line)

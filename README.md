@@ -59,7 +59,7 @@ A storage that provides methods to save and retrieve data from OS Keychain.
 Most safety storage, but with limitations by [SDK](https://developer.apple.com/documentation/security).  
 
 ```swift
-let storage = KeychaiStorageKit(key: "MyKey", configuration: .init(service: Bundle.main.bundleIdentifier ?? "MyService")
+let storage = KeychainStorage(key: "MyKey", configuration: .init(service: Bundle.main.bundleIdentifier ?? "MyService")
 storage.value = auth.token
 ```
 
