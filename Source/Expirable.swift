@@ -78,3 +78,8 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
 }
 
 extension Expirable: Codable where Value: Codable {}
+
+#if swift(>=6.0)
+extension Lifetime: Sendable {}
+extension Expirable: @unchecked Sendable {}
+#endif

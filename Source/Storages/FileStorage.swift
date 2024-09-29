@@ -85,3 +85,7 @@ where Value: ExpressibleByNilLiteral & Codable {
         }
     }
 }
+
+#if swift(>=6.0)
+extension FileStorage: @unchecked Sendable {}
+#endif

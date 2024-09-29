@@ -4,7 +4,7 @@ import StorageKit
 import XCTest
 
 final class DefaultsTests: XCTestCase {
-    private struct Custom: Codable, Equatable {
+    fileprivate struct Custom: Codable, Equatable {
         let value: Int
     }
 
@@ -80,8 +80,9 @@ extension DefaultsTests {
                                         defaultValue: T,
                                         values: [T],
                                         isProperttListType: Bool = true, // UserDefaults error: Attempt to insert non-property list object
-                                        file: StaticString = #file,
-                                        line: UInt = #line) where T: Codable & Equatable {
+                                        file: StaticString = #filePath,
+                                        line: UInt = #line)
+    where T: Codable & Equatable & SafeSendable {
         let key = String(describing: T.self)
         let userDefaults: UserDefaults = .init(suiteName: "JetDefaultsTests_\(key)")!
         // clean user defaults before use
@@ -131,6 +132,7 @@ extension DefaultsTests {
         let exp = expectation(description: "other thread")
         results = []
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
+            let userDefaults: UserDefaults = .init(suiteName: "JetDefaultsTests_\(key)")!
             for v in values {
                 userDefaults.set(try! encoder.encode(v), forKey: key)
             }
@@ -142,3 +144,16 @@ extension DefaultsTests {
         XCTAssertEqual(results, values, "synchronize 'data' from other thread", file: file, line: line)
     }
 }
+
+#if swift(>=6.0)
+private protocol SafeSendable: Sendable {}
+#else
+private protocol SafeSendable {}
+#endif
+
+extension Int: SafeSendable {}
+extension Double: SafeSendable {}
+extension String: SafeSendable {}
+extension DefaultsTests.Custom: SafeSendable {}
+extension Array: SafeSendable where Element: SafeSendable {}
+extension Optional: SafeSendable where Wrapped: SafeSendable {}

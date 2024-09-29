@@ -4,6 +4,16 @@ import Foundation
 public typealias ValueSubject<Value> = CurrentValueSubject<Value, Never>
 public typealias ValuePublisher<Value> = AnyPublisher<Value, Never>
 
+#if swift(>=6.0)
+public protocol Storage<Value>: AnyObject, Sendable, ObservableObject {
+    associatedtype Value
+
+    var eventier: ValuePublisher<Value> { get }
+    var value: Value { get set }
+
+    func sink(receiveValue: @escaping @Sendable (Value) -> Void) -> AnyCancellable
+}
+#else
 public protocol Storage<Value>: AnyObject, ObservableObject {
     associatedtype Value
 
@@ -12,6 +22,7 @@ public protocol Storage<Value>: AnyObject, ObservableObject {
 
     func sink(receiveValue: @escaping (Value) -> Void) -> AnyCancellable
 }
+#endif
 
 public extension Storage {
     func sink(receiveValue: @escaping (Value) -> Void) -> AnyCancellable {

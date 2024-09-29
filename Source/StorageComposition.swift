@@ -91,3 +91,7 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
         subject.send(newValue)
     }
 }
+
+#if swift(>=6.0)
+extension StorageComposition: @unchecked Sendable {}
+#endif

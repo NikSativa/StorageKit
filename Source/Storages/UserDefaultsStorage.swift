@@ -47,3 +47,7 @@ where Value: ExpressibleByNilLiteral & Codable {
         subject.send(result)
     }
 }
+
+#if swift(>=6.0)
+extension UserDefaultsStorage: @unchecked Sendable {}
+#endif

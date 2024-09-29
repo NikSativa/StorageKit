@@ -137,3 +137,8 @@ public extension Keychain {
         }
     }
 }
+
+#if swift(>=6.0)
+extension Keychain: Sendable {}
+extension KeychainError: Sendable {}
+#endif

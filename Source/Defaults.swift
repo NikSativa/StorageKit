@@ -71,16 +71,16 @@ public final class Defaults<Value: Codable> {
             if let new = new as? Value {
                 newRestored = new
             } else if new is NSNull {
-                newRestored = defaultValue
+                newRestored = self.defaultValue
             } else if let new = new as? Data {
                 do {
                     newRestored = try self.decoder.decode(Value.self, from: new)
                 } catch {
-                    newRestored = defaultValue
+                    newRestored = self.defaultValue
                 }
             } else {
                 assertionFailure("somehow value in defaults was overridden with wrong type")
-                newRestored = defaultValue
+                newRestored = self.defaultValue
             }
 
             eventier.send(newRestored)
@@ -91,7 +91,12 @@ public final class Defaults<Value: Codable> {
 private final class DefaultsObserver: NSObject {
     private let userDefaults: UserDefaults
     private let key: String
+
+    #if swift(>=6.0)
+    var updateHandler: (@Sendable (_ new: Any?) -> Void)?
+    #else
     var updateHandler: ((_ new: Any?) -> Void)?
+    #endif
 
     required init(key: String,
                   userDefaults: UserDefaults) {
@@ -110,11 +115,12 @@ private final class DefaultsObserver: NSObject {
             return
         }
 
+        let new = UnsafeSendable(change[.newKey])
         if Thread.isMainThread {
-            updateHandler?(change[.newKey])
+            updateHandler?(new.value)
         } else {
             DispatchQueue.main.sync {
-                updateHandler?(change[.newKey])
+                updateHandler?(new.value)
             }
         }
     }
@@ -156,5 +162,26 @@ public extension Defaults where Value: ExpressibleByDictionaryLiteral, Value.Key
                   decoder: decoder,
                   encoder: encoder,
                   userDefaults: userDefaults)
+    }
+}
+
+#if swift(>=6.0)
+extension Defaults: @unchecked Sendable {}
+extension DefaultsObserver: @unchecked Sendable {}
+#endif
+
+#if swift(>=6.0)
+private struct UnsafeSendable<T>: @unchecked Sendable {
+    let value: T
+}
+#else
+struct UnsafeSendable<T> {
+    let value: T
+}
+#endif
+
+extension UnsafeSendable {
+    init(_ value: T) {
+        self.value = value
     }
 }

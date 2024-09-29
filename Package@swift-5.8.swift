@@ -22,7 +22,7 @@ let package = Package(
                 ],
                 path: "Source",
                 resources: [
-                    .copy("../PrivacyInfo.xcprivacy")
+                    .process("PrivacyInfo.xcprivacy")
                 ]),
         .testTarget(name: "StorageKitTests",
                     dependencies: [

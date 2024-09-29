@@ -86,3 +86,8 @@ where Value: Equatable & Codable & ExpressibleByNilLiteral {
         }
     }
 }
+
+#if swift(>=6.0)
+extension KeychainConfiguration: Sendable {}
+extension KeychainStorage: @unchecked Sendable {}
+#endif

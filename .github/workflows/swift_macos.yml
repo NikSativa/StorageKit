@@ -1,0 +1,57 @@
+name: "NikSativa CI"
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/**"
+      - "Package.swift"
+      - "Source/**"
+      - "Tests/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "Package.swift"
+      - "Source/**"
+      - "Tests/**"
+
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  macOS:
+    name: "macOS ${{ matrix.xcode }} ${{ matrix.swift }}"
+    runs-on: ${{ matrix.runsOn }}
+    env:
+      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - xcode: "Xcode_16"
+            runsOn: macOS-15
+            swift: "6.0"
+            outputFilter: xcbeautify --renderer github-actions
+          - xcode: "Xcode_15.4"
+            runsOn: macOS-14
+            swift: "5.10"
+            outputFilter: xcbeautify --renderer github-actions
+          - xcode: "Xcode_15.2"
+            runsOn: macOS-14
+            swift: "5.9"
+            outputFilter: xcbeautify --renderer github-actions
+          - xcode: "Xcode_14.3"
+            runsOn: macOS-13
+            swift: "5.8"
+            outputFilter: xcbeautify --renderer github-actions
+    steps:
+      - uses: NeedleInAJayStack/setup-swift@feat/swift-6 # swift-actions/setup-swift@main
+        with:
+          swift-version: ${{ matrix.swift }}
+      - uses: actions/checkout@v4
+      - name: "Build ${{ matrix.xcode }} ${{ matrix.swift }}"
+        run: swift build -v | ${{ matrix.outputFilter }}
+      - name: "Test ${{ matrix.xcode }} ${{ matrix.swift }}"
+        run: swift test -v | ${{ matrix.outputFilter }}

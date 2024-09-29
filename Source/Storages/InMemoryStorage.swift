@@ -23,3 +23,7 @@ public extension InMemoryStorage where Value: ExpressibleByNilLiteral {
         self.init(value: nil)
     }
 }
+
+#if swift(>=6.0)
+extension InMemoryStorage: @unchecked Sendable {}
+#endif

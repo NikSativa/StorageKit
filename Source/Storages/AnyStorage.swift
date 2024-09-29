@@ -43,3 +43,7 @@ public extension Storage {
         return AnyStorage(self)
     }
 }
+
+#if swift(>=6.0)
+extension AnyStorage: @unchecked Sendable {}
+#endif
