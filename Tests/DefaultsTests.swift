@@ -3,6 +3,7 @@ import Foundation
 import StorageKit
 import XCTest
 
+@MainActor
 final class DefaultsTests: XCTestCase {
     fileprivate struct Custom: Codable, Equatable {
         let value: Int
@@ -105,8 +106,8 @@ extension DefaultsTests {
         let encoder = JSONEncoder()
         var observers: Set<AnyCancellable> = []
 
-        @Defaults(key, defaultValue: defaultValue, userDefaults: userDefaults)
-        var varValue: T
+        @Defaults(key: key, userDefaults: userDefaults)
+        var varValue: T = defaultValue
 
         $varValue.sink { new in
             results.append(new)
