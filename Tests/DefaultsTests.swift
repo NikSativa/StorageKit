@@ -9,55 +9,67 @@ final class DefaultsTests: XCTestCase {
     }
 
     func test_int() {
-        run_test_value_type(Int.self, defaultValue: 1, values: [2, 3, 4, 5])
+        run_test_value_type(Int.self, defaultValue: 1, values: [2, 3, 4, 5], userDefaults: nil)
+        run_test_value_type(Int.self, defaultValue: 1, values: [2, 3, 4, 5], userDefaults: .standard)
     }
 
     func test_double() {
-        run_test_value_type(Double.self, defaultValue: 1, values: [2, 3, 4, 5])
+        run_test_value_type(Double.self, defaultValue: 1, values: [2, 3, 4, 5], userDefaults: nil)
+        run_test_value_type(Double.self, defaultValue: 1, values: [2, 3, 4, 5], userDefaults: .standard)
     }
 
     func test_string() {
-        run_test_value_type(String.self, defaultValue: "1", values: ["2", "3", "4", "5"])
+        run_test_value_type(String.self, defaultValue: "1", values: ["2", "3", "4", "5"], userDefaults: nil)
+        run_test_value_type(String.self, defaultValue: "1", values: ["2", "3", "4", "5"], userDefaults: .standard)
     }
 
     func test_custom() {
-        run_test_value_type(Custom.self, defaultValue: .init(value: 1), values: [2, 3, 4, 5].map(Custom.init(value:)), isProperttListType: false)
+        run_test_value_type(Custom.self, defaultValue: .init(value: 1), values: [2, 3, 4, 5].map(Custom.init(value:)), isPropertyListType: false, userDefaults: nil)
+        run_test_value_type(Custom.self, defaultValue: .init(value: 1), values: [2, 3, 4, 5].map(Custom.init(value:)), isPropertyListType: false, userDefaults: .standard)
     }
 
     // MARK: - arrays
 
     func test_array_of_int() {
-        run_test_value_type([Int].self, defaultValue: [], values: [[2], [3], [4], [5]])
+        run_test_value_type([Int].self, defaultValue: [], values: [[2], [3], [4], [5]], userDefaults: nil)
+        run_test_value_type([Int].self, defaultValue: [], values: [[2], [3], [4], [5]], userDefaults: .standard)
     }
 
     func test_array_of_double() {
-        run_test_value_type([Double].self, defaultValue: [], values: [[2], [3], [4], [5]])
+        run_test_value_type([Double].self, defaultValue: [], values: [[2], [3], [4], [5]], userDefaults: nil)
+        run_test_value_type([Double].self, defaultValue: [], values: [[2], [3], [4], [5]], userDefaults: .standard)
     }
 
     func test_array_of_string() {
-        run_test_value_type([String].self, defaultValue: [], values: [["2"], ["3"], ["4"], ["5"]])
+        run_test_value_type([String].self, defaultValue: [], values: [["2"], ["3"], ["4"], ["5"]], userDefaults: nil)
+        run_test_value_type([String].self, defaultValue: [], values: [["2"], ["3"], ["4"], ["5"]], userDefaults: .standard)
     }
 
     func test_array_of_custom() {
-        run_test_value_type([Custom].self, defaultValue: [], values: [[2], [3], [4], [5]].map { $0.map(Custom.init(value:)) }, isProperttListType: false)
+        run_test_value_type([Custom].self, defaultValue: [], values: [[2], [3], [4], [5]].map { $0.map(Custom.init(value:)) }, isPropertyListType: false, userDefaults: nil)
+        run_test_value_type([Custom].self, defaultValue: [], values: [[2], [3], [4], [5]].map { $0.map(Custom.init(value:)) }, isPropertyListType: false, userDefaults: .standard)
     }
 
     // MARK: - optionals
 
     func test_optional_int() {
-        run_test_value_type(Int?.self, defaultValue: nil, values: [2, nil, 4, 5], isProperttListType: false)
+        run_test_value_type(Int?.self, defaultValue: nil, values: [2, nil, 4, 5], isPropertyListType: false, userDefaults: nil)
+        run_test_value_type(Int?.self, defaultValue: nil, values: [2, nil, 4, 5], isPropertyListType: false, userDefaults: .standard)
     }
 
     func test_optional_double() {
-        run_test_value_type(Double?.self, defaultValue: nil, values: [2, 3, nil, 5], isProperttListType: false)
+        run_test_value_type(Double?.self, defaultValue: nil, values: [2, 3, nil, 5], isPropertyListType: false, userDefaults: nil)
+        run_test_value_type(Double?.self, defaultValue: nil, values: [2, 3, nil, 5], isPropertyListType: false, userDefaults: .standard)
     }
 
     func test_optional_string() {
-        run_test_value_type(String?.self, defaultValue: nil, values: ["2", "3", "4", nil], isProperttListType: false)
+        run_test_value_type(String?.self, defaultValue: nil, values: ["2", "3", "4", nil], isPropertyListType: false, userDefaults: nil)
+        run_test_value_type(String?.self, defaultValue: nil, values: ["2", "3", "4", nil], isPropertyListType: false, userDefaults: .standard)
     }
 
     func test_optional_custom() {
-        run_test_value_type(Custom?.self, defaultValue: nil, values: [2, 3, 4, nil].map { $0.map(Custom.init(value:)) }, isProperttListType: false)
+        run_test_value_type(Custom?.self, defaultValue: nil, values: [2, 3, 4, nil].map { $0.map(Custom.init(value:)) }, isPropertyListType: false, userDefaults: nil)
+        run_test_value_type(Custom?.self, defaultValue: nil, values: [2, 3, 4, nil].map { $0.map(Custom.init(value:)) }, isPropertyListType: false, userDefaults: .standard)
     }
 
     func test_convenience_init() {
@@ -79,12 +91,13 @@ extension DefaultsTests {
     private func run_test_value_type<T>(_ type: T.Type,
                                         defaultValue: T,
                                         values: [T],
-                                        isProperttListType: Bool = true, // UserDefaults error: Attempt to insert non-property list object
+                                        isPropertyListType: Bool = true, // UserDefaults error: Attempt to insert non-property list object
+                                        userDefaults: UserDefaults?,
                                         file: StaticString = #filePath,
                                         line: UInt = #line)
     where T: Codable & Equatable & SafeSendable {
         let key = String(describing: T.self)
-        let userDefaults: UserDefaults = .init(suiteName: "JetDefaultsTests_\(key)")!
+        let userDefaults: UserDefaults = userDefaults ?? .init(suiteName: "DefaultsTests_\(key)")!
         // clean user defaults before use
         userDefaults.set(nil, forKey: key)
 
@@ -110,7 +123,7 @@ extension DefaultsTests {
         let expected = [defaultValue] + values
         XCTAssertEqual(results, expected, "linear usage", file: file, line: line)
 
-        if isProperttListType {
+        if isPropertyListType {
             // synchronizing 'value' with setting value from some other place of app
             results = []
             for v in values {
@@ -131,10 +144,10 @@ extension DefaultsTests {
         // synchronize 'data' with setting value from some other place of app (not main thread)
         let exp = expectation(description: "other thread")
         results = []
+        let unsafeSendable = UnsafeSendable(value: userDefaults)
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-            let userDefaults: UserDefaults = .init(suiteName: "JetDefaultsTests_\(key)")!
             for v in values {
-                userDefaults.set(try! encoder.encode(v), forKey: key)
+                unsafeSendable.value.set(try! encoder.encode(v), forKey: key)
             }
             exp.fulfill()
         }
@@ -147,8 +160,14 @@ extension DefaultsTests {
 
 #if swift(>=6.0)
 private protocol SafeSendable: Sendable {}
+private struct UnsafeSendable<Value>: @unchecked Sendable {
+    let value: Value
+}
 #else
 private protocol SafeSendable {}
+private struct UnsafeSendable<Value> {
+    let value: Value
+}
 #endif
 
 extension Int: SafeSendable {}
