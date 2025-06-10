@@ -111,7 +111,8 @@ extension DefaultsTests {
 
         $varValue.sink { new in
             results.append(new)
-        }.store(in: &observers)
+        }
+        .store(in: &observers)
 
         XCTAssertEqual(varValue, defaultValue, "default value", file: file, line: line)
 

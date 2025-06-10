@@ -4,6 +4,13 @@ import Foundation
 #if swift(>=6.0)
 @MainActor
 #endif
+/// A property wrapper that stores and observes values in `UserDefaults` with support for encoding and decoding.
+///
+/// `Defaults` synchronizes with `UserDefaults`, enabling automatic storage, retrieval, and observation
+/// of values using Combine. It supports any type conforming to `Codable` and `Equatable`.
+///
+/// You can customize the encoder and decoder or use default JSON-based ones.
+/// Value changes from external sources are monitored and published via `projectedValue`.
 @propertyWrapper
 public final class Defaults<Value: Codable & Equatable> {
     private let userDefaults: UserDefaults
@@ -24,10 +31,17 @@ public final class Defaults<Value: Codable & Equatable> {
     private lazy var encoder: JSONEncoder = encoderGenerator()
 
     private lazy var eventier: ValueSubject<Value> = .init(wrappedValue)
+    /// A Combine publisher that emits the current value and all subsequent changes.
+    ///
+    /// Use this publisher to observe updates reactively.
     public private(set) lazy var projectedValue: AnyPublisher<Value, Never> = {
         return eventier.removeDuplicates().eraseToAnyPublisher()
     }()
 
+    /// The value stored in `UserDefaults`.
+    ///
+    /// If the stored value cannot be decoded, the default value is returned.
+    /// Assigning a new value encodes and stores it in `UserDefaults`.
     public var wrappedValue: Value {
         get {
             do {
@@ -59,6 +73,14 @@ public final class Defaults<Value: Codable & Equatable> {
         }
     }
 
+    /// Creates a new `Defaults` property wrapper instance.
+    ///
+    /// - Parameters:
+    ///   - wrappedValue: The default value used when no value is stored.
+    ///   - key: The `UserDefaults` key used for storage.
+    ///   - decoder: An optional closure that provides a custom `JSONDecoder`.
+    ///   - encoder: An optional closure that provides a custom `JSONEncoder`.
+    ///   - userDefaults: The `UserDefaults` instance to use (defaults to `.standard`).
     public required init(wrappedValue defaultValue: Value,
                          key: String,
                          decoder: (() -> JSONDecoder)? = nil,
@@ -127,6 +149,9 @@ public final class Defaults<Value: Codable & Equatable> {
     }
 }
 
+/// A convenience initializer for optional values.
+///
+/// Initializes the property wrapper with `nil` as the default value.
 public extension Defaults where Value: ExpressibleByNilLiteral {
     convenience init(_ key: String,
                      decoder: (() -> JSONDecoder)? = nil,
@@ -140,6 +165,9 @@ public extension Defaults where Value: ExpressibleByNilLiteral {
     }
 }
 
+/// A convenience initializer for array literal types.
+///
+/// Initializes the property wrapper with an empty array as the default value.
 public extension Defaults where Value: ExpressibleByArrayLiteral, Value.ArrayLiteralElement: Codable {
     convenience init(_ key: String,
                      decoder: (() -> JSONDecoder)? = nil,
@@ -153,6 +181,9 @@ public extension Defaults where Value: ExpressibleByArrayLiteral, Value.ArrayLit
     }
 }
 
+/// A convenience initializer for dictionary literal types.
+///
+/// Initializes the property wrapper with an empty dictionary as the default value.
 public extension Defaults where Value: ExpressibleByDictionaryLiteral, Value.Key: Codable, Value.Value: Codable {
     convenience init(_ key: String,
                      decoder: (() -> JSONDecoder)? = nil,

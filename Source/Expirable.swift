@@ -1,49 +1,17 @@
 import Foundation
 
-public struct Lifetime: Codable, Equatable {
-    public static let infinite = Lifetime()
-    public static let oneHour = Lifetime(expiresInSeconds: 3600)
-    public static let fourHours = Lifetime(expiresInSeconds: 3600 * 4)
-    public static let twentyFourHours = Lifetime(expiresInSeconds: 3600 * 24)
-
-    private let interval: TimeInterval
-    public var isInfinite: Bool {
-        return interval < 0
-    }
-
-    public init() {
-        self.interval = -1
-    }
-
-    public init(expiresInSeconds interval: TimeInterval) {
-        self.interval = interval
-    }
-
-    public func hasExpired(from date: Date, currentDate: Date) -> Bool {
-        if isInfinite {
-            return false
-        }
-
-        return currentDate.timeIntervalSince(date) > interval
-    }
-}
-
-// MARK: - ExpressibleByFloatLiteral
-
-extension Lifetime: ExpressibleByFloatLiteral {
-    public init(floatLiteral value: Float) {
-        self.init(expiresInSeconds: TimeInterval(value))
-    }
-}
-
-// MARK: - ExpressibleByIntegerLiteral
-
-extension Lifetime: ExpressibleByIntegerLiteral {
-    public init(integerLiteral value: Int) {
-        self.init(expiresInSeconds: TimeInterval(value))
-    }
-}
-
+/// A property wrapper that automatically invalidates its value after a specified duration.
+///
+/// Use `Expirable` to store values that should become `nil` after a defined time interval has elapsed.
+/// This is useful for implementing token expiration, temporary caching, or any use case where time-based invalidation is needed.
+///
+/// The wrapper resets the expiration timer whenever a new value is set.
+///
+/// ### Example
+/// ```swift
+/// @Expirable(lifetimeInterval: 3600)
+/// var token: String?
+/// ```
 @propertyWrapper
 public struct Expirable<Value: ExpressibleByNilLiteral> {
     private var _value: Value
@@ -54,6 +22,10 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
         return lifetime.hasExpired(from: savedDate, currentDate: Date())
     }
 
+    /// The currently stored value, or `nil` if the expiration interval has elapsed.
+    ///
+    /// Getting this value returns `nil` if the lifetime has expired.
+    /// Setting a new value resets the expiration timer and stores the new value.
     public var wrappedValue: Value {
         get {
             return hasExpired ? nil : _value
@@ -64,12 +36,22 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
         }
     }
 
+    /// Creates an expirable wrapper using a custom expiration interval.
+    ///
+    /// - Parameters:
+    ///   - wrappedValue: The initial value to store.
+    ///   - interval: The number of seconds the value remains valid before expiring.
     public init(wrappedValue: Value = nil,
                 lifetimeInterval interval: TimeInterval) {
         self.lifetime = Lifetime(expiresInSeconds: interval)
         self._value = wrappedValue
     }
 
+    /// Creates an expirable wrapper using a predefined `Lifetime`.
+    ///
+    /// - Parameters:
+    ///   - wrappedValue: The initial value to store.
+    ///   - lifetime: A `Lifetime` object that defines how long the value remains valid.
     public init(wrappedValue: Value = nil,
                 lifetime: Lifetime) {
         self.lifetime = lifetime
@@ -77,10 +59,8 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
     }
 }
 
-extension Expirable: Codable where Value: Codable {}
 extension Expirable: Equatable where Value: Equatable {}
 
 #if swift(>=6.0)
-extension Lifetime: Sendable {}
 extension Expirable: @unchecked Sendable {}
 #endif

@@ -1,14 +1,28 @@
 import Combine
 import Foundation
 
+/// A composite storage that synchronizes a value across multiple underlying storage instances.
+///
+/// `StorageComposition` allows combining several `Storage` backends into one logical unit.
+/// It observes all underlying storages and propagates changes bidirectionally. When one storage changes,
+/// the update is applied to the others to maintain consistency.
+///
+/// This class is useful for scenarios such as layered storage with fallback behavior (e.g., memory + disk).
 internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatable>: Storage {
     private let subject: ValueSubject<Value>
+    /// A publisher that emits the current value and any future changes across the combined storages.
+    ///
+    /// Use this publisher to observe updates from any of the underlying storages.
     public private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
 
     private let storages: [AnyStorage<Value>]
     private var observers: [AnyCancellable] = []
     private var isSyncing: Bool = false
 
+    /// The current value shared by all combined storages.
+    ///
+    /// Reading this property returns the first non-nil value found across storages.
+    /// Setting it writes the value to all storages and notifies observers.
     var value: Value {
         get {
             return get()
@@ -18,6 +32,10 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
         }
     }
 
+    /// Creates a `StorageComposition` by combining storages conforming to `Storage<Value>`.
+    ///
+    /// - Parameter storages: An array of storages to be combined.
+    /// - Note: This initializer is available only on platforms supporting generalized existential types.
     @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
     convenience init(storages: [any Storage<Value>]) {
         let anyStorages = storages.map {
@@ -26,12 +44,17 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
         self.init(storages: anyStorages)
     }
 
+    /// Creates a `StorageComposition` from an array of type-erased storages.
+    ///
+    /// - Parameter storages: The list of underlying storages.
+    ///
+    /// If the array is empty, an in-memory fallback storage is automatically added.
     init(storages: [AnyStorage<Value>]) {
         assert(!storages.isEmpty, "we hit a snag! maybe in runtime some Storages was filtered")
 
         if storages.isEmpty {
-            // maybe in runtime Storages was filtered due some lack options
-            // to make shure that the storage will work at any case, we are adding default InMemory storage
+            // storages might have been filtered at runtime due to missing options
+            // to ensure the storage always works, we are adding a default InMemory storage
             self.storages = [InMemoryStorage<Value>().toAny()]
         } else {
             self.storages = storages
@@ -47,15 +70,15 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
         }
 
         self.subject = .init(found)
-        self.observers = storages.map { actaul in
-            return actaul.eventier.dropFirst().sink { [unowned self, unowned actaul] newValue in
+        self.observers = storages.map { actual in
+            return actual.eventier.dropFirst().sink { [unowned self, unowned actual] newValue in
                 if isSyncing {
                     return
                 }
 
                 self.isSyncing = true
                 for storage in self.storages {
-                    if actaul !== storage {
+                    if actual !== storage {
                         storage.value = newValue
                     }
                 }

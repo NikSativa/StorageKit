@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - $default-branch
     paths:
       - ".github/workflows/**"
       - "Package.swift"
@@ -17,41 +18,38 @@ on:
       - "Tests/**"
 
 concurrency:
-  group: ${{ github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 jobs:
   macOS:
-    name: "macOS ${{ matrix.xcode }} ${{ matrix.swift }}"
-    runs-on: ${{ matrix.runsOn }}
+    name: "macOS ${{ matrix.swift }}"
+    runs-on: macos-latest
     env:
-      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
+      OUTPUT_FILTER: ${{ matrix.outputFilter }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - xcode: "Xcode_16"
-            runsOn: macOS-15
-            swift: "6.0"
-            outputFilter: xcbeautify --renderer github-actions
-          - xcode: "Xcode_15.4"
-            runsOn: macOS-14
-            swift: "5.10"
-            outputFilter: xcbeautify --renderer github-actions
-          - xcode: "Xcode_15.2"
-            runsOn: macOS-14
-            swift: "5.9"
-            outputFilter: xcbeautify --renderer github-actions
-          - xcode: "Xcode_14.3"
-            runsOn: macOS-13
-            swift: "5.8"
-            outputFilter: xcbeautify --renderer github-actions
+        swift:
+          - "6.1"
+          - "6.0"
+          - "5.10"
+          - "5.9"
+        outputFilter:
+          - xcbeautify --renderer github-actions
     steps:
-      - uses: NeedleInAJayStack/setup-swift@feat/swift-6 # swift-actions/setup-swift@main
+      - uses: swift-actions/setup-swift@v2
         with:
           swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v4
-      - name: "Build ${{ matrix.xcode }} ${{ matrix.swift }}"
-        run: swift build -v | ${{ matrix.outputFilter }}
-      - name: "Test ${{ matrix.xcode }} ${{ matrix.swift }}"
-        run: swift test -v | ${{ matrix.outputFilter }}
+      - name: Cache Swift packages
+        uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ matrix.swift }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-${{ matrix.swift }}-
+      - name: "Build ${{ matrix.swift }}"
+        run: swift build -v | $OUTPUT_FILTER
+      - name: "Test ${{ matrix.swift }}"
+        run: swift test -v | $OUTPUT_FILTER
