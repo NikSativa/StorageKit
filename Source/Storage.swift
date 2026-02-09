@@ -124,8 +124,7 @@ public extension Storage {
 /// - Returns: A new `Storage` that reflects the combined state.
 @available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
 @inline(__always)
-public func zip<Value>(storages: [any Storage<Value>]) -> some Storage<Value>
-where Value: ExpressibleByNilLiteral & Equatable {
+public func zip<Value: ExpressibleByNilLiteral & Equatable>(storages: [any Storage<Value>]) -> some Storage<Value> {
     return StorageComposition(storages: storages).toAny()
 }
 
@@ -137,7 +136,6 @@ where Value: ExpressibleByNilLiteral & Equatable {
 @available(macOS, deprecated: 13)
 @available(iOS, deprecated: 16)
 @inline(__always)
-public func zip<Value>(storages: [AnyStorage<Value>]) -> some Storage<Value>
-where Value: ExpressibleByNilLiteral & Equatable {
+public func zip<Value: ExpressibleByNilLiteral & Equatable>(storages: [AnyStorage<Value>]) -> some Storage<Value> {
     return StorageComposition(storages: storages).toAny()
 }

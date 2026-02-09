@@ -3,7 +3,6 @@ import Foundation
 import StorageKit
 import XCTest
 
-@MainActor
 final class DefaultsTests: XCTestCase {
     fileprivate struct Custom: Codable, Equatable {
         let value: Int
@@ -89,14 +88,13 @@ final class DefaultsTests: XCTestCase {
 }
 
 extension DefaultsTests {
-    private func run_test_value_type<T>(_ type: T.Type,
-                                        defaultValue: T,
-                                        values: [T],
-                                        isPropertyListType: Bool = true, // UserDefaults error: Attempt to insert non-property list object
-                                        userDefaults: UserDefaults?,
-                                        file: StaticString = #filePath,
-                                        line: UInt = #line)
-    where T: Codable & Equatable & SafeSendable {
+    private func run_test_value_type<T: Codable & Equatable & SafeSendable>(_: T.Type,
+                                                                            defaultValue: T,
+                                                                            values: [T],
+                                                                            isPropertyListType: Bool = true, // UserDefaults error: Attempt to insert non-property list object
+                                                                            userDefaults: UserDefaults?,
+                                                                            file: StaticString = #filePath,
+                                                                            line: UInt = #line) {
         let key = String(describing: T.self)
         let userDefaults: UserDefaults = userDefaults ?? .init(suiteName: "DefaultsTests_\(key)")!
         // clean user defaults before use

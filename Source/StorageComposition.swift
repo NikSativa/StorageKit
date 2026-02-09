@@ -13,7 +13,7 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
     /// A publisher that emits the current value and any future changes across the combined storages.
     ///
     /// Use this publisher to observe updates from any of the underlying storages.
-    public private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
+    private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
 
     private let storages: [AnyStorage<Value>]
     private var observers: [AnyCancellable] = []

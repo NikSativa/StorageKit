@@ -8,8 +8,7 @@ import Foundation
 /// Use this class to manage lightweight settings, preferences, or any other persistable data.
 ///
 /// - Note: The `Value` must conform to `Codable` and `ExpressibleByNilLiteral`.
-public final class UserDefaultsStorage<Value>: Storage
-where Value: ExpressibleByNilLiteral & Codable {
+public final class UserDefaultsStorage<Value: ExpressibleByNilLiteral & Codable>: Storage {
     private lazy var subject: ValueSubject<Value> = .init(get())
     /// A publisher that emits the current value and all subsequent changes.
     ///

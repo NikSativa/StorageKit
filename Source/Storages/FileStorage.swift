@@ -7,8 +7,7 @@ import Foundation
 /// through Combine publishers.
 ///
 /// The file is stored in the app's Caches directory under a "Storages" folder.
-public final class FileStorage<Value>: Storage
-where Value: ExpressibleByNilLiteral & Codable {
+public final class FileStorage<Value: ExpressibleByNilLiteral & Codable>: Storage {
     private lazy var subject: ValueSubject<Value> = .init(get())
     /// A publisher that emits the current value and all subsequent updates.
     ///

@@ -1,9 +1,6 @@
 import Combine
 import Foundation
 
-#if swift(>=6.0)
-@MainActor
-#endif
 /// A property wrapper that stores and observes values in `UserDefaults` with support for encoding and decoding.
 ///
 /// `Defaults` synchronizes with `UserDefaults`, enabling automatic storage, retrieval, and observation
@@ -93,21 +90,30 @@ public final class Defaults<Value: Codable & Equatable> {
         self.decoderGenerator = decoder ?? { .init() }
 
         self.defaultsObserver = .init(key: key, userDefaults: userDefaults)
-        defaultsObserver.updateHandler = { [weak self] _ in
-            self?.syncMain()
-        }
-
-        // sometimes KVO is not working
-        self.notificationToken = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification,
-                                                                        object: userDefaults,
-                                                                        queue: .main) { [weak self] _ in
-            self?.syncMain()
-        }
+        subscribe()
     }
 
     deinit {
         if let notificationToken {
             NotificationCenter.default.removeObserver(notificationToken)
+        }
+    }
+
+    private func subscribe() {
+        // swiftformat:disable:next all
+        let unsafeSync = UnsafeSendable({ [weak self] in
+            self?.syncMain()
+        })
+
+        defaultsObserver.updateHandler = { [unsafeSync] _ in
+            unsafeSync.value()
+        }
+
+        // sometimes KVO is not working
+        notificationToken = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification,
+                                                                   object: userDefaults,
+                                                                   queue: .main) { [unsafeSync] _ in
+            unsafeSync.value()
         }
     }
 
@@ -197,10 +203,6 @@ public extension Defaults where Value: ExpressibleByDictionaryLiteral, Value.Key
     }
 }
 
-#if swift(>=6.0)
-extension Defaults: @unchecked Sendable {}
-#endif
-
 private final class DefaultsObserver: NSObject {
     private let userDefaults: UserDefaults
     private let key: String
@@ -223,7 +225,7 @@ private final class DefaultsObserver: NSObject {
         userDefaults.removeObserver(self, forKeyPath: key, context: nil)
     }
 
-    override public func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
         guard let change, keyPath == key else {
             return
         }
@@ -239,20 +241,18 @@ private final class DefaultsObserver: NSObject {
     }
 }
 
-#if swift(>=6.0)
-extension DefaultsObserver: @unchecked Sendable {}
-
-private struct UnsafeSendable<T>: @unchecked Sendable {
+private struct UnsafeSendable<T> {
     let value: T
 }
-#else
-struct UnsafeSendable<T> {
-    let value: T
-}
-#endif
 
 extension UnsafeSendable {
     init(_ value: T) {
         self.value = value
     }
 }
+
+#if swift(>=6.0)
+extension Defaults: @unchecked Sendable {}
+extension DefaultsObserver: @unchecked Sendable {}
+extension UnsafeSendable: @unchecked Sendable {}
+#endif
