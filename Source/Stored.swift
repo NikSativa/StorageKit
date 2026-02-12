@@ -25,7 +25,7 @@ public struct Stored<Value> {
         self.base = base.toAny()
     }
 
-    @available(iOS 16.0.0, *)
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
     public init(storages base: [any Storage<Value>])
         where Value: ExpressibleByNilLiteral & Equatable {
         self.base = zip(storages: base).toAny()
