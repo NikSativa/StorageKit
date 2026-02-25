@@ -36,3 +36,7 @@ public struct Stored<Value> {
         self.base = zip(storages: base).toAny()
     }
 }
+
+#if swift(>=6.0)
+extension Stored: @unchecked Sendable {}
+#endif
