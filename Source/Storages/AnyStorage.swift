@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// A type-erased wrapper for any storage instance.
@@ -7,7 +8,7 @@ import Foundation
 public final class AnyStorage<Value>: Storage {
     private let _get: () -> Value
     private let _set: (Value) -> Void
-    private let _publisher: () -> ValuePublisher<Value>
+    private let _publisher: () -> AnyPublisher<Value, Never>
 
     /// The current value in the storage.
     ///
@@ -43,7 +44,7 @@ public final class AnyStorage<Value>: Storage {
     /// A publisher that emits the current value and all future changes.
     ///
     /// Delegates to the underlying storage's Combine publisher.
-    public var eventier: ValuePublisher<Value> {
+    public var eventier: AnyPublisher<Value, Never> {
         return _publisher()
     }
 }

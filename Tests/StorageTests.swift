@@ -3,32 +3,32 @@ import StorageKit
 import XCTest
 
 final class StorageTests: XCTestCase {
-    func test_storages() {
+    func test_storages() throws {
         storageTesting(InMemoryStorage(value: 1))
         storageTesting(FileStorage(fileName: "TestFile.txt"))
         storageTesting(UserDefaultsStorage(key: "MyKey"))
 
         storageTesting(InMemoryStorage(value: 1).toAny())
-        storageTesting(InMemoryStorage<Int?>(value: 1).combine(UserDefaultsStorage(key: "MyKey")))
-        storageTesting(InMemoryStorage<Int?>(value: 1).combine(UserDefaultsStorage(key: "MyKey")).toAny())
+        try storageTesting(InMemoryStorage<Int?>(value: 1).combine(UserDefaultsStorage(key: "MyKey")))
+        try storageTesting(InMemoryStorage<Int?>(value: 1).combine(UserDefaultsStorage(key: "MyKey")).toAny())
 
         if #available(iOS 16, macOS 13, tvOS 16.0, watchOS 9.0, *) {
-            storageTesting(zip(storages: [
+            try storageTesting(zip(storages: [
                 InMemoryStorage<Int?>(value: 1),
                 UserDefaultsStorage(key: "MyKey")
             ]))
 
-            storageTesting(zip(storages: [
+            try storageTesting(zip(storages: [
                 InMemoryStorage<Int?>(value: 1),
                 UserDefaultsStorage(key: "MyKey")
             ]).toAny())
         } else {
-            storageTesting(zip(storages: [
+            try storageTesting(zip(storages: [
                 InMemoryStorage<Int?>(value: 1).toAny(),
                 UserDefaultsStorage(key: "MyKey").toAny()
             ]))
 
-            storageTesting(zip(storages: [
+            try storageTesting(zip(storages: [
                 InMemoryStorage<Int?>(value: 1).toAny(),
                 UserDefaultsStorage(key: "MyKey").toAny()
             ]).toAny())

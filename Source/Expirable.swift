@@ -13,10 +13,11 @@ import Foundation
 /// var token: String?
 /// ```
 @propertyWrapper
-public struct Expirable<Value: ExpressibleByNilLiteral> {
+public struct Expirable<Value> {
     private var _value: Value
     private let lifetime: Lifetime
     private var savedDate = Date()
+    private let defaultValue: Value
 
     private var hasExpired: Bool {
         return lifetime.hasExpired(from: savedDate, currentDate: Date())
@@ -28,7 +29,7 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
     /// Setting a new value resets the expiration timer and stores the new value.
     public var wrappedValue: Value {
         get {
-            return hasExpired ? nil : _value
+            return hasExpired ? defaultValue : _value
         }
         set {
             savedDate = Date()
@@ -41,10 +42,12 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
     /// - Parameters:
     ///   - wrappedValue: The initial value to store.
     ///   - interval: The number of seconds the value remains valid before expiring.
-    public init(wrappedValue: Value = nil,
+    public init(wrappedValue: Value,
+                defaultValue: Value,
                 lifetimeInterval interval: TimeInterval) {
         self.lifetime = Lifetime(expiresInSeconds: interval)
         self._value = wrappedValue
+        self.defaultValue = defaultValue
     }
 
     /// Creates an expirable wrapper using a predefined `Lifetime`.
@@ -52,10 +55,64 @@ public struct Expirable<Value: ExpressibleByNilLiteral> {
     /// - Parameters:
     ///   - wrappedValue: The initial value to store.
     ///   - lifetime: A `Lifetime` object that defines how long the value remains valid.
-    public init(wrappedValue: Value = nil,
+    public init(wrappedValue: Value,
+                defaultValue: Value,
                 lifetime: Lifetime) {
         self.lifetime = lifetime
         self._value = wrappedValue
+        self.defaultValue = defaultValue
+    }
+}
+
+/// Convenience initializers for optional-like values using `nil` as the expired fallback.
+public extension Expirable where Value: ExpressibleByNilLiteral {
+    init(wrappedValue: Value,
+         lifetimeInterval interval: TimeInterval) {
+        self.init(wrappedValue: wrappedValue, defaultValue: nil, lifetimeInterval: interval)
+    }
+
+    init(wrappedValue: Value,
+         lifetime: Lifetime) {
+        self.init(wrappedValue: wrappedValue, defaultValue: nil, lifetime: lifetime)
+    }
+}
+
+/// Convenience initializers for array literal values using an empty array as the expired fallback.
+public extension Expirable where Value: ExpressibleByArrayLiteral {
+    init(wrappedValue: Value,
+         lifetimeInterval interval: TimeInterval) {
+        self.init(wrappedValue: wrappedValue, defaultValue: [], lifetimeInterval: interval)
+    }
+
+    init(wrappedValue: Value,
+         lifetime: Lifetime) {
+        self.init(wrappedValue: wrappedValue, defaultValue: [], lifetime: lifetime)
+    }
+}
+
+/// Convenience initializers for dictionary literal values using an empty dictionary as the expired fallback.
+public extension Expirable where Value: ExpressibleByDictionaryLiteral {
+    init(wrappedValue: Value,
+         lifetimeInterval interval: TimeInterval) {
+        self.init(wrappedValue: wrappedValue, defaultValue: [:], lifetimeInterval: interval)
+    }
+
+    init(wrappedValue: Value,
+         lifetime: Lifetime) {
+        self.init(wrappedValue: wrappedValue, defaultValue: [:], lifetime: lifetime)
+    }
+}
+
+/// Convenience initializers for boolean literal values using `false` as the expired fallback.
+public extension Expirable where Value: ExpressibleByBooleanLiteral {
+    init(wrappedValue: Value,
+         lifetimeInterval interval: TimeInterval) {
+        self.init(wrappedValue: wrappedValue, defaultValue: false, lifetimeInterval: interval)
+    }
+
+    init(wrappedValue: Value,
+         lifetime: Lifetime) {
+        self.init(wrappedValue: wrappedValue, defaultValue: false, lifetime: lifetime)
     }
 }
 

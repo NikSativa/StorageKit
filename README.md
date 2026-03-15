@@ -48,7 +48,7 @@ struct User: Codable {
 }
 
 final class UserViewModel {
-    @Defaults("user", defaultValue: nil)
+    @Defaults("user")
     var user: User? {
         didSet {
             print("User updated: \(user)")
@@ -114,6 +114,15 @@ let combined = zip(storages: [
     InMemoryStorage<Int?>(value: 1),
     UserDefaultsStorage(key: "MyKey")
 ])
+
+// For non-nil literal types provide explicit defaultValue
+let combinedInt = zip(
+    storages: [
+        InMemoryStorage<Int>(value: 1),
+        UserDefaultsStorage<Int>(key: "MyKey", defaultValue: 0)
+    ],
+    defaultValue: 0
+)
 ```
 
 ### Reactive Updates
@@ -129,9 +138,9 @@ let cancellable = storage.sink { value in
 
 ## Requirements
 
-- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+
-- Swift 5.5+
-- Xcode 13.0+
+- iOS 13.0+ / macOS 11.0+ / tvOS 13.0+ / watchOS 6.0+ / visionOS 1.0+
+- Swift 5.10+
+- Xcode 15.0+
 
 ## License
 

@@ -67,6 +67,7 @@ public struct Keychain {
     }
 }
 
+/// APIs for reading, writing, and deleting keychain values.
 public extension Keychain {
     /// Reads and decodes a value of the given type from the Keychain.
     ///

@@ -27,7 +27,7 @@ public final class Defaults<Value: Codable & Equatable> {
     private let encoderGenerator: () -> JSONEncoder
     private lazy var encoder: JSONEncoder = encoderGenerator()
 
-    private lazy var eventier: ValueSubject<Value> = .init(wrappedValue)
+    private lazy var eventier: CurrentValueSubject<Value, Never> = .init(wrappedValue)
     /// A Combine publisher that emits the current value and all subsequent changes.
     ///
     /// Use this publisher to observe updates reactively.
@@ -196,6 +196,22 @@ public extension Defaults where Value: ExpressibleByDictionaryLiteral, Value.Key
                      encoder: (() -> JSONEncoder)? = nil,
                      userDefaults: UserDefaults = .standard) {
         self.init(wrappedValue: [:],
+                  key: key,
+                  decoder: decoder,
+                  encoder: encoder,
+                  userDefaults: userDefaults)
+    }
+}
+
+/// A convenience initializer for boolean literal types.
+///
+/// Initializes the property wrapper with `false` as the default value.
+public extension Defaults where Value: ExpressibleByBooleanLiteral {
+    convenience init(_ key: String,
+                     decoder: (() -> JSONDecoder)? = nil,
+                     encoder: (() -> JSONEncoder)? = nil,
+                     userDefaults: UserDefaults = .standard) {
+        self.init(wrappedValue: false,
                   key: key,
                   decoder: decoder,
                   encoder: encoder,

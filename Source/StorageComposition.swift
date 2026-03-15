@@ -1,6 +1,11 @@
 import Combine
 import Foundation
 
+enum StorageCompositionError: Swift.Error, Equatable {
+    case emptyStorageList
+    case noValueFound
+}
+
 /// A composite storage that synchronizes a value across multiple underlying storage instances.
 ///
 /// `StorageComposition` allows combining several `Storage` backends into one logical unit.
@@ -8,16 +13,17 @@ import Foundation
 /// the update is applied to the others to maintain consistency.
 ///
 /// This class is useful for scenarios such as layered storage with fallback behavior (e.g., memory + disk).
-internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatable>: Storage {
-    private let subject: ValueSubject<Value>
+internal final class StorageComposition<Value: Equatable>: Storage {
+    private let subject: CurrentValueSubject<Value, Never>
     /// A publisher that emits the current value and any future changes across the combined storages.
     ///
     /// Use this publisher to observe updates from any of the underlying storages.
-    private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
+    private(set) lazy var eventier: AnyPublisher<Value, Never> = subject.eraseToAnyPublisher()
 
     private let storages: [AnyStorage<Value>]
     private var observers: [AnyCancellable] = []
     private var isSyncing: Bool = false
+    private let defaultValue: Value
 
     /// The current value shared by all combined storages.
     ///
@@ -37,30 +43,27 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
     /// - Parameter storages: An array of storages to be combined.
     /// - Note: This initializer is available only on platforms supporting generalized existential types.
     @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
-    convenience init(storages: [any Storage<Value>]) {
+    convenience init(storages: [any Storage<Value>], defaultValue: Value) throws {
         let anyStorages = storages.map {
             return $0.toAny()
         }
-        self.init(storages: anyStorages)
+        try self.init(storages: anyStorages, defaultValue: defaultValue)
     }
 
     /// Creates a `StorageComposition` from an array of type-erased storages.
     ///
     /// - Parameter storages: The list of underlying storages.
-    ///
-    /// If the array is empty, an in-memory fallback storage is automatically added.
-    init(storages: [AnyStorage<Value>]) {
+    init(storages: [AnyStorage<Value>], defaultValue: Value) throws {
         assert(!storages.isEmpty, "we hit a snag! maybe in runtime some Storages was filtered")
+        self.defaultValue = defaultValue
 
         if storages.isEmpty {
-            // storages might have been filtered at runtime due to missing options
-            // to ensure the storage always works, we are adding a default InMemory storage
-            self.storages = [InMemoryStorage<Value>().toAny()]
+            throw StorageCompositionError.emptyStorageList
         } else {
             self.storages = storages
         }
 
-        var found: Value = nil
+        var found: Value = defaultValue
         for storage in storages {
             let value = storage.value
             if value != found {
@@ -88,7 +91,7 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
     }
 
     private func get() -> Value {
-        let empty: Value = nil
+        let empty: Value = defaultValue
         let found: (offset: Int, element: Value)? = storages.lazy
             .map(\.value)
             .enumerated()
@@ -112,6 +115,50 @@ internal final class StorageComposition<Value: ExpressibleByNilLiteral & Equatab
 
         objectWillChange.send()
         subject.send(newValue)
+    }
+}
+
+extension StorageComposition where Value: ExpressibleByNilLiteral {
+    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
+    convenience init(storages: [any Storage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: nil)
+    }
+
+    convenience init(storages: [AnyStorage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: nil)
+    }
+}
+
+extension StorageComposition where Value: ExpressibleByArrayLiteral {
+    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
+    convenience init(storages: [any Storage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: [])
+    }
+
+    convenience init(storages: [AnyStorage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: [])
+    }
+}
+
+extension StorageComposition where Value: ExpressibleByDictionaryLiteral {
+    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
+    convenience init(storages: [any Storage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: [:])
+    }
+
+    convenience init(storages: [AnyStorage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: [:])
+    }
+}
+
+extension StorageComposition where Value: ExpressibleByBooleanLiteral {
+    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
+    convenience init(storages: [any Storage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: false)
+    }
+
+    convenience init(storages: [AnyStorage<Value>]) throws {
+        try self.init(storages: storages, defaultValue: false)
     }
 }
 

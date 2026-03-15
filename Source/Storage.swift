@@ -1,16 +1,6 @@
 import Combine
 import Foundation
 
-/// A subject that emits values of type `Value` and never fails.
-///
-/// This is a type-safe alias for `CurrentValueSubject<Value, Never>`, commonly used in reactive storage.
-public typealias ValueSubject<Value> = CurrentValueSubject<Value, Never>
-
-/// A type-erased publisher that emits values of type `Value` and never fails.
-///
-/// This is a common output type for observing storage value changes.
-public typealias ValuePublisher<Value> = AnyPublisher<Value, Never>
-
 #if swift(>=6.0)
 /// A protocol that defines a reactive storage interface for reading and writing values.
 ///
@@ -25,7 +15,7 @@ public protocol Storage<Value>: AnyObject, Sendable, ObservableObject {
     /// A Combine publisher that emits the current value and all future updates.
     ///
     /// Use this to observe value changes reactively.
-    var eventier: ValuePublisher<Value> { get }
+    var eventier: AnyPublisher<Value, Never> { get }
 
     /// The currently stored value.
     ///
@@ -48,7 +38,7 @@ public protocol Storage<Value>: AnyObject, ObservableObject {
     associatedtype Value
 
     /// A publisher that emits the current value and any subsequent changes.
-    var eventier: ValuePublisher<Value> { get }
+    var eventier: AnyPublisher<Value, Never> { get }
 
     /// The current value stored in the storage.
     var value: Value { get set }
@@ -60,6 +50,7 @@ public protocol Storage<Value>: AnyObject, ObservableObject {
 }
 #endif
 
+/// Convenience helpers for combining and subscribing to storages.
 public extension Storage {
     /// Default implementation of `sink(receiveValue:)` that forwards to the `eventier` publisher.
     func sink(receiveValue: @escaping (Value) -> Void) -> AnyCancellable {
@@ -73,9 +64,29 @@ public extension Storage {
     /// - Parameters: One or more storages to combine with.
     /// - Returns: A new storage that integrates the provided storages.
     /// - Note: The value type must conform to both `ExpressibleByNilLiteral` and `Equatable`.
-    func combine<S: Storage>(_ a: S) -> some Storage<Value>
-    where S.Value == Value, Value: ExpressibleByNilLiteral & Equatable {
-        return StorageComposition(storages: [toAny(), a.toAny()])
+    func combine<S: Storage>(_ a: S, defaultValue: Value) throws -> some Storage<Value>
+    where S.Value == Value, Value: Equatable {
+        return try StorageComposition(storages: [toAny(), a.toAny()], defaultValue: defaultValue)
+    }
+
+    func combine<S: Storage>(_ a: S) throws -> some Storage<Value>
+    where S.Value == Value, Value: Equatable & ExpressibleByNilLiteral {
+        return try StorageComposition(storages: [toAny(), a.toAny()], defaultValue: nil)
+    }
+
+    func combine<S: Storage>(_ a: S) throws -> some Storage<Value>
+    where S.Value == Value, Value: Equatable & ExpressibleByArrayLiteral {
+        return try StorageComposition(storages: [toAny(), a.toAny()], defaultValue: [])
+    }
+
+    func combine<S: Storage>(_ a: S) throws -> some Storage<Value>
+    where S.Value == Value, Value: Equatable & ExpressibleByDictionaryLiteral {
+        return try StorageComposition(storages: [toAny(), a.toAny()], defaultValue: [:])
+    }
+
+    func combine<S: Storage>(_ a: S) throws -> some Storage<Value>
+    where S.Value == Value, Value: Equatable & ExpressibleByBooleanLiteral {
+        return try StorageComposition(storages: [toAny(), a.toAny()], defaultValue: false)
     }
 
     /// Combines this storage with other storages to form a unified storage.
@@ -85,9 +96,29 @@ public extension Storage {
     /// - Parameters: One or more storages to combine with.
     /// - Returns: A new storage that integrates the provided storages.
     /// - Note: The value type must conform to both `ExpressibleByNilLiteral` and `Equatable`.
-    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2) -> some Storage<Value>
-    where S1.Value == Value, S2.Value == Value, Value: ExpressibleByNilLiteral & Equatable {
-        return StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()])
+    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2, defaultValue: Value) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, Value: Equatable {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()], defaultValue: defaultValue)
+    }
+
+    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, Value: Equatable & ExpressibleByNilLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()], defaultValue: nil)
+    }
+
+    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, Value: Equatable & ExpressibleByArrayLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()], defaultValue: [])
+    }
+
+    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, Value: Equatable & ExpressibleByDictionaryLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()], defaultValue: [:])
+    }
+
+    func combine<S1: Storage, S2: Storage>(_ s1: S1, s2: S2) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, Value: Equatable & ExpressibleByBooleanLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny()], defaultValue: false)
     }
 
     /// Combines this storage with other storages to form a unified storage.
@@ -97,9 +128,29 @@ public extension Storage {
     /// - Parameters: One or more storages to combine with.
     /// - Returns: A new storage that integrates the provided storages.
     /// - Note: The value type must conform to both `ExpressibleByNilLiteral` and `Equatable`.
-    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3) -> some Storage<Value>
-    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: ExpressibleByNilLiteral & Equatable {
-        return StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()])
+    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3, defaultValue: Value) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: Equatable {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()], defaultValue: defaultValue)
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: Equatable & ExpressibleByNilLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()], defaultValue: nil)
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: Equatable & ExpressibleByArrayLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()], defaultValue: [])
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: Equatable & ExpressibleByDictionaryLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()], defaultValue: [:])
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage>(_ s1: S1, s2: S2, s3: S3) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, Value: Equatable & ExpressibleByBooleanLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny()], defaultValue: false)
     }
 
     /// Combines this storage with other storages to form a unified storage.
@@ -109,9 +160,29 @@ public extension Storage {
     /// - Parameters: One or more storages to combine with.
     /// - Returns: A new storage that integrates the provided storages.
     /// - Note: The value type must conform to both `ExpressibleByNilLiteral` and `Equatable`.
-    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4) -> some Storage<Value>
-    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: ExpressibleByNilLiteral & Equatable {
-        return StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()])
+    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4, defaultValue: Value) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: Equatable {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()], defaultValue: defaultValue)
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: Equatable & ExpressibleByNilLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()], defaultValue: nil)
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: Equatable & ExpressibleByArrayLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()], defaultValue: [])
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: Equatable & ExpressibleByDictionaryLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()], defaultValue: [:])
+    }
+
+    func combine<S1: Storage, S2: Storage, S3: Storage, S4: Storage>(_ s1: S1, s2: S2, s3: S3, s4: S4) throws -> some Storage<Value>
+    where S1.Value == Value, S2.Value == Value, S3.Value == Value, S4.Value == Value, Value: Equatable & ExpressibleByBooleanLiteral {
+        return try StorageComposition(storages: [toAny(), s1.toAny(), s2.toAny(), s3.toAny(), s4.toAny()], defaultValue: false)
     }
 }
 
@@ -124,18 +195,34 @@ public extension Storage {
 /// - Returns: A new `Storage` that reflects the combined state.
 @available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
 @inline(__always)
-public func zip<Value: ExpressibleByNilLiteral & Equatable>(storages: [any Storage<Value>]) -> some Storage<Value> {
-    return StorageComposition(storages: storages).toAny()
+public func zip<Value: Equatable>(storages: [any Storage<Value>], defaultValue: Value) throws -> some Storage<Value> {
+    return try StorageComposition(storages: storages, defaultValue: defaultValue).toAny()
 }
 
-/// Combines multiple type-erased storages into a unified storage instance.
-///
-/// - Parameter storages: An array of `AnyStorage` instances to combine.
-/// - Returns: A new `Storage` that reflects the combined state.
-/// - Important: Deprecated in iOS 16.0 and later. Use the non-deprecated version with `any Storage<Value>`.
-@available(macOS, deprecated: 13)
-@available(iOS, deprecated: 16)
+/// Combines storages and uses `nil` as the default value.
+@available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
 @inline(__always)
-public func zip<Value: ExpressibleByNilLiteral & Equatable>(storages: [AnyStorage<Value>]) -> some Storage<Value> {
-    return StorageComposition(storages: storages).toAny()
+public func zip<Value: Equatable & ExpressibleByNilLiteral>(storages: [any Storage<Value>]) throws -> some Storage<Value> {
+    return try StorageComposition(storages: storages, defaultValue: nil).toAny()
+}
+
+/// Combines storages and uses an empty array as the default value.
+@available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
+@inline(__always)
+public func zip<Value: Equatable & ExpressibleByArrayLiteral>(storages: [any Storage<Value>]) throws -> some Storage<Value> {
+    return try StorageComposition(storages: storages, defaultValue: []).toAny()
+}
+
+/// Combines storages and uses an empty dictionary as the default value.
+@available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
+@inline(__always)
+public func zip<Value: Equatable & ExpressibleByDictionaryLiteral>(storages: [any Storage<Value>]) throws -> some Storage<Value> {
+    return try StorageComposition(storages: storages, defaultValue: [:]).toAny()
+}
+
+/// Combines storages and uses `false` as the default value.
+@available(macOS 13, iOS 16, tvOS 16.0, watchOS 9.0, *)
+@inline(__always)
+public func zip<Value: Equatable & ExpressibleByBooleanLiteral>(storages: [any Storage<Value>]) throws -> some Storage<Value> {
+    return try StorageComposition(storages: storages, defaultValue: false).toAny()
 }

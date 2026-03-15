@@ -1,5 +1,7 @@
+import Combine
 import Foundation
 
+/// Configuration for keychain access and value encoding.
 public struct KeychainConfiguration: Equatable {
     /// unique id for app. in common case is bundle id.
     public let service: String
@@ -8,7 +10,9 @@ public struct KeychainConfiguration: Equatable {
     /// iCloud sync
     public let synchronizable: Bool
 
+    /// Decoder used to restore values from keychain data.
     public let decoder: JSONDecoder
+    /// Encoder used to serialize values before writing to keychain.
     public let encoder: JSONEncoder
 
     /// Secure storage
@@ -27,6 +31,9 @@ public struct KeychainConfiguration: Equatable {
         self.encoder = encoder
     }
 
+    /// Compares configurations by keychain addressing fields.
+    ///
+    /// Decoder and encoder instances are intentionally ignored.
     public static func ==(lhs: KeychainConfiguration, rhs: KeychainConfiguration) -> Bool {
         return lhs.service == rhs.service
             && lhs.accessGroup == rhs.accessGroup
@@ -52,20 +59,21 @@ public struct KeychainConfiguration: Equatable {
 /// storage.value = "abc123"
 /// ```
 public final class KeychainStorage<Value>: Storage
-where Value: Equatable & Codable & ExpressibleByNilLiteral {
-    private lazy var subject: ValueSubject<Value> = .init(get())
+where Value: Equatable & Codable {
+    private lazy var subject: CurrentValueSubject<Value, Never> = .init(get())
     /// A publisher that emits the current value and all future changes.
     ///
     /// Use this publisher to observe changes to the stored value reactively using Combine.
-    public private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
+    public private(set) lazy var eventier: AnyPublisher<Value, Never> = subject.eraseToAnyPublisher()
 
     private let key: String
     private let keychain: Keychain
+    private let defaultValue: Value
 
     /// The value currently stored in the Keychain.
     ///
-    /// Setting a new value writes it to the Keychain. Assigning `nil` clears the stored value.
-    /// Getting the value returns the most recently stored value, or `nil` if unavailable or invalid.
+    /// Setting a new value writes it to the Keychain. Assigning the configured default value clears the stored item.
+    /// Getting the value returns the stored value, or the default value when missing or invalid.
     public var value: Value {
         get {
             return get()
@@ -80,9 +88,10 @@ where Value: Equatable & Codable & ExpressibleByNilLiteral {
     /// - Parameters:
     ///   - key: The key used to store and retrieve the value in the Keychain.
     ///   - keychain: A `Keychain` instance that provides access to the secure storage APIs.
-    public init(key: String, keychain: Keychain) {
+    public init(key: String, defaultValue: Value, keychain: Keychain) {
         self.key = key
         self.keychain = keychain
+        self.defaultValue = defaultValue
     }
 
     /// Creates a Keychain-backed storage instance using a configuration.
@@ -90,19 +99,19 @@ where Value: Equatable & Codable & ExpressibleByNilLiteral {
     /// - Parameters:
     ///   - key: The key used to store and retrieve the value in the Keychain.
     ///   - configuration: A `KeychainConfiguration` that defines how the Keychain is accessed.
-    public convenience init(key: String, configuration: KeychainConfiguration) {
-        self.init(key: key, keychain: .init(configuration: configuration))
+    public convenience init(key: String, defaultValue: Value, configuration: KeychainConfiguration) {
+        self.init(key: key, defaultValue: defaultValue, keychain: .init(configuration: configuration))
     }
 
     private func get() -> Value {
         if let result = try? keychain.read(Value.self, for: key) {
             return result
         }
-        return nil
+        return defaultValue
     }
 
     private func set(_ newValue: Value) {
-        let empty: Value = nil
+        let empty: Value = defaultValue
 
         do {
             if newValue != empty {
@@ -115,6 +124,50 @@ where Value: Equatable & Codable & ExpressibleByNilLiteral {
         } catch {
             assertionFailure("\(error)")
         }
+    }
+}
+
+/// Convenience initializers that use `nil` as the default value.
+public extension KeychainStorage where Value: ExpressibleByNilLiteral {
+    convenience init(key: String, keychain: Keychain) {
+        self.init(key: key, defaultValue: nil, keychain: keychain)
+    }
+
+    convenience init(key: String, configuration: KeychainConfiguration) {
+        self.init(key: key, defaultValue: nil, keychain: .init(configuration: configuration))
+    }
+}
+
+/// Convenience initializers that use an empty array as the default value.
+public extension KeychainStorage where Value: ExpressibleByArrayLiteral {
+    convenience init(key: String, keychain: Keychain) {
+        self.init(key: key, defaultValue: [], keychain: keychain)
+    }
+
+    convenience init(key: String, configuration: KeychainConfiguration) {
+        self.init(key: key, defaultValue: [], keychain: .init(configuration: configuration))
+    }
+}
+
+/// Convenience initializers that use an empty dictionary as the default value.
+public extension KeychainStorage where Value: ExpressibleByDictionaryLiteral {
+    convenience init(key: String, keychain: Keychain) {
+        self.init(key: key, defaultValue: [:], keychain: keychain)
+    }
+
+    convenience init(key: String, configuration: KeychainConfiguration) {
+        self.init(key: key, defaultValue: [:], keychain: .init(configuration: configuration))
+    }
+}
+
+/// Convenience initializers that use `false` as the default value.
+public extension KeychainStorage where Value: ExpressibleByBooleanLiteral {
+    convenience init(key: String, keychain: Keychain) {
+        self.init(key: key, defaultValue: false, keychain: keychain)
+    }
+
+    convenience init(key: String, configuration: KeychainConfiguration) {
+        self.init(key: key, defaultValue: false, keychain: .init(configuration: configuration))
     }
 }
 

@@ -110,12 +110,14 @@ public func /(lhs: Lifetime, rhs: Double) -> Lifetime {
 }
 
 extension Lifetime: Codable {
+    /// Creates a lifetime from a single encoded time interval.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let interval = try container.decode(TimeInterval.self)
         self.init(expiresInSeconds: interval)
     }
 
+    /// Encodes the lifetime as a single time interval.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(interval)

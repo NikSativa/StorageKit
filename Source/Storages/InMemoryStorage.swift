@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// A storage backend that retains values in memory only, without persistent storage.
@@ -7,11 +8,11 @@ import Foundation
 ///
 /// The value is stored in RAM and reset when the application restarts.
 public final class InMemoryStorage<Value>: Storage {
-    private lazy var subject: ValueSubject<Value> = .init(value)
+    private lazy var subject: CurrentValueSubject<Value, Never> = .init(value)
     /// A publisher that emits the current value and all future changes.
     ///
     /// This publisher reflects updates to the stored value and supports reactive bindings.
-    public private(set) lazy var eventier: ValuePublisher<Value> = subject.eraseToAnyPublisher()
+    public private(set) lazy var eventier: AnyPublisher<Value, Never> = subject.eraseToAnyPublisher()
 
     /// The current value stored in memory.
     ///
@@ -39,6 +40,27 @@ public final class InMemoryStorage<Value>: Storage {
 public extension InMemoryStorage where Value: ExpressibleByNilLiteral {
     convenience init() {
         self.init(value: nil)
+    }
+}
+
+/// Convenience initializer for array literal values with an empty array default.
+public extension InMemoryStorage where Value: ExpressibleByArrayLiteral {
+    convenience init() {
+        self.init(value: [])
+    }
+}
+
+/// Convenience initializer for dictionary literal values with an empty dictionary default.
+public extension InMemoryStorage where Value: ExpressibleByDictionaryLiteral {
+    convenience init() {
+        self.init(value: [:])
+    }
+}
+
+/// Convenience initializer for boolean literal values with `false` default.
+public extension InMemoryStorage where Value: ExpressibleByBooleanLiteral {
+    convenience init() {
+        self.init(value: false)
     }
 }
 
