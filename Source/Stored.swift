@@ -2,9 +2,8 @@ import Combine
 import Foundation
 
 /// A property wrapper that forwards reads and writes to a storage backend.
-@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 @propertyWrapper
-public struct Stored<Value> {
+public struct Stored<Value: Equatable> {
     private let base: AnyStorage<Value>
 
     /// The current value from the underlying storage.
@@ -39,9 +38,57 @@ public struct Stored<Value> {
     /// Creates a wrapper that synchronizes multiple storages.
     ///
     /// - Parameter base: Storages to combine into one synchronized storage.
-    public init(storages base: [any Storage<Value>]) throws
-        where Value: ExpressibleByNilLiteral & Equatable {
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    public init(storages base: [any Storage<Value>], defaultValue: Value) throws {
+        self.base = try zip(storages: base, defaultValue: defaultValue).toAny()
+    }
+
+    public init(storages: [AnyStorage<Value>], defaultValue: Value) throws {
+        self.base = try StorageComposition(storages: storages, defaultValue: defaultValue).toAny()
+    }
+}
+
+public extension Stored where Value: ExpressibleByNilLiteral {
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    init(storages base: [any Storage<Value>]) throws {
         self.base = try zip(storages: base).toAny()
+    }
+
+    init(storages: [AnyStorage<Value>]) throws {
+        self.base = try StorageComposition(storages: storages).toAny()
+    }
+}
+
+public extension Stored where Value: ExpressibleByArrayLiteral {
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    init(storages base: [any Storage<Value>]) throws {
+        self.base = try zip(storages: base).toAny()
+    }
+
+    init(storages: [AnyStorage<Value>]) throws {
+        self.base = try StorageComposition(storages: storages).toAny()
+    }
+}
+
+public extension Stored where Value: ExpressibleByDictionaryLiteral {
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    init(storages base: [any Storage<Value>]) throws {
+        self.base = try zip(storages: base).toAny()
+    }
+
+    init(storages: [AnyStorage<Value>]) throws {
+        self.base = try StorageComposition(storages: storages).toAny()
+    }
+}
+
+public extension Stored where Value: ExpressibleByBooleanLiteral {
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    init(storages base: [any Storage<Value>]) throws {
+        self.base = try zip(storages: base).toAny()
+    }
+
+    init(storages: [AnyStorage<Value>]) throws {
+        self.base = try StorageComposition(storages: storages).toAny()
     }
 }
 
