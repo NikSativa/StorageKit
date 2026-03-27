@@ -5,12 +5,12 @@ import PackageDescription
 let package = Package(
     name: "StorageKit",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v11),
-        .macCatalyst(.v13),
+        .iOS(.v16),
+        .macOS(.v14),
+        .macCatalyst(.v16),
         .visionOS(.v1),
-        .tvOS(.v13),
-        .watchOS(.v6)
+        .tvOS(.v16),
+        .watchOS(.v9)
     ],
     products: [
         .library(name: "StorageKit", targets: ["StorageKit"])
