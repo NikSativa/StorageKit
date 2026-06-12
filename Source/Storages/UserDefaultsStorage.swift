@@ -97,7 +97,4 @@ public extension UserDefaultsStorage where Value: ExpressibleByBooleanLiteral {
         self.init(key: key, defaultValue: false, defaults: defaults)
     }
 }
-
-#if swift(>=6.0)
 extension UserDefaultsStorage: @unchecked Sendable {}
-#endif

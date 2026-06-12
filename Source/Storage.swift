@@ -1,7 +1,5 @@
 import Combine
 import Foundation
-
-#if swift(>=6.0)
 /// A protocol that defines a reactive storage interface for reading and writing values.
 ///
 /// `Storage` abstracts the concept of value persistence with support for Combine-based observation.
@@ -28,27 +26,6 @@ public protocol Storage<Value>: AnyObject, Sendable, ObservableObject {
     /// - Returns: An `AnyCancellable` that can be used to cancel the subscription.
     func sink(receiveValue: @escaping @Sendable (Value) -> Void) -> AnyCancellable
 }
-#else
-/// A protocol that defines the interface for storing and retrieving values.
-/// Storage implementations provide a way to persist and observe changes to values.
-///
-/// The protocol combines Combine's `ObservableObject` with a value storage mechanism,
-/// allowing for reactive updates when values change.
-public protocol Storage<Value>: AnyObject, ObservableObject {
-    associatedtype Value
-
-    /// A publisher that emits the current value and any subsequent changes.
-    var eventier: AnyPublisher<Value, Never> { get }
-
-    /// The current value stored in the storage.
-    var value: Value { get set }
-
-    /// Subscribes to value changes and returns a cancellable subscription.
-    /// - Parameter receiveValue: A closure that is called with the new value whenever it changes.
-    /// - Returns: A cancellable subscription that can be used to stop receiving updates.
-    func sink(receiveValue: @escaping (Value) -> Void) -> AnyCancellable
-}
-#endif
 
 /// Convenience helpers for combining and subscribing to storages.
 public extension Storage {

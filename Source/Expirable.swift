@@ -118,7 +118,4 @@ public extension Expirable where Value: ExpressibleByBooleanLiteral {
 
 extension Expirable: Codable where Value: Codable {}
 extension Expirable: Equatable where Value: Equatable {}
-
-#if swift(>=6.0)
 extension Expirable: @unchecked Sendable {}
-#endif

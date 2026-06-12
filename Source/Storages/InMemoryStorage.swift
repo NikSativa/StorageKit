@@ -63,7 +63,4 @@ public extension InMemoryStorage where Value: ExpressibleByBooleanLiteral {
         self.init(value: false)
     }
 }
-
-#if swift(>=6.0)
 extension InMemoryStorage: @unchecked Sendable {}
-#endif

@@ -161,7 +161,4 @@ extension StorageComposition where Value: ExpressibleByBooleanLiteral {
         try self.init(storages: storages, defaultValue: false)
     }
 }
-
-#if swift(>=6.0)
 extension StorageComposition: @unchecked Sendable {}
-#endif

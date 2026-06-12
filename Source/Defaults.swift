@@ -15,12 +15,7 @@ public final class Defaults<Value: Codable & Equatable> {
     private let key: String
     private let defaultValue: Value
     private let defaultsObserver: DefaultsObserver
-
-    #if swift(>=6.0)
     private nonisolated(unsafe) var notificationToken: (any NSObjectProtocol)?
-    #else
-    private var notificationToken: (any NSObjectProtocol)?
-    #endif
 
     private let decoderGenerator: () -> JSONDecoder
     private lazy var decoder: JSONDecoder = decoderGenerator()
@@ -119,14 +114,9 @@ public final class Defaults<Value: Codable & Equatable> {
 
     private nonisolated func syncMain() {
         assert(Thread.isMainThread, "Should be used only in main thread")
-
-        #if swift(>=6.0)
         MainActor.assumeIsolated {
             notifyAboutChanges()
         }
-        #else
-        notifyAboutChanges()
-        #endif
     }
 
     private func notifyAboutChanges() {
@@ -222,12 +212,7 @@ public extension Defaults where Value: ExpressibleByBooleanLiteral {
 private final class DefaultsObserver: NSObject {
     private let userDefaults: UserDefaults
     private let key: String
-
-    #if swift(>=6.0)
     var updateHandler: (@Sendable (_ new: Any?) -> Void)?
-    #else
-    var updateHandler: ((_ new: Any?) -> Void)?
-    #endif
 
     required init(key: String,
                   userDefaults: UserDefaults) {
@@ -266,9 +251,6 @@ extension UnsafeSendable {
         self.value = value
     }
 }
-
-#if swift(>=6.0)
 extension Defaults: @unchecked Sendable {}
 extension DefaultsObserver: @unchecked Sendable {}
 extension UnsafeSendable: @unchecked Sendable {}
-#endif

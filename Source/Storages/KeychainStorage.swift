@@ -170,8 +170,5 @@ public extension KeychainStorage where Value: ExpressibleByBooleanLiteral {
         self.init(key: key, defaultValue: false, keychain: .init(configuration: configuration))
     }
 }
-
-#if swift(>=6.0)
 extension KeychainConfiguration: Sendable {}
 extension KeychainStorage: @unchecked Sendable {}
-#endif

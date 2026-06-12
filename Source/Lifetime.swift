@@ -123,7 +123,4 @@ extension Lifetime: Codable {
         try container.encode(interval)
     }
 }
-
-#if swift(>=6.0)
 extension Lifetime: Sendable {}
-#endif

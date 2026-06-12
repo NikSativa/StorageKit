@@ -183,7 +183,4 @@ public extension FileStorage where Value: ExpressibleByBooleanLiteral {
                   defaultValue: false)
     }
 }
-
-#if swift(>=6.0)
 extension FileStorage: @unchecked Sendable {}
-#endif
