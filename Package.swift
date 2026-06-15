@@ -5,9 +5,9 @@ import PackageDescription
 let package = Package(
     name: "StorageKit",
     platforms: [
-        .iOS(.v16),
+        .iOS(.v15),
         .macOS(.v14),
-        .macCatalyst(.v16),
+        .macCatalyst(.v15),
         .visionOS(.v1),
         .tvOS(.v16),
         .watchOS(.v9)
